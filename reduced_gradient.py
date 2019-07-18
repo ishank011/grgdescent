@@ -8,21 +8,21 @@ import timeit
 
 def GeneralizedReducedGradient():
 
-    x1, x2, x3 = symbols('x1 x2 x3')
-    xvars = [x1, x2, x3]
+    x, y, z = symbols('x y z')
+    xvars = [x, y, z]
 
-    fx = 4 * x1 - x2 ** 2 + x3 ** 2 - 12				# Function to be minimized
-    gx = [20 - x1 ** 2 - x2 ** 2, x1 + x3 - 7]			# Constraints to be obeyed
-    alpha = 1											# Parameter initializations
+    fx = 4 * x - y ** 2 + z ** 2 - 12				# Function to be minimized
+    gx = [20 - x ** 2 - y ** 2, x + z - 7]			# Constraints to be obeyed
+    alpha = 1										# Parameter initializations
     gamma = 0.4
-    max_iter = 100
+    max_iter = 100                                  # Max iteration
     max_outer_iter = 50
-    eps_1, eps_2, eps_3 = 0.001, 0.001, 0.001
+    eps_1, eps_2, eps_3 = 0.001, 0.001, 0.001       # Epsilon values
 
-    x_curr_val = np.array([2, 4, 5])							# Starting solution
+    x_curr_val = np.array([2, 4, 5])				# Starting solution
 
-    dfx = np.array([diff(fx, xvar) for xvar in xvars])
-    dgx = np.array([[diff(g, xvar) for xvar in xvars] for g in gx])
+    dfx = np.array([diff(fx, xvar) for xvar in xvars])                      # Derivative for fx
+    dgx = np.array([[diff(g, xvar) for xvar in xvars] for g in gx])         # Derivative for gx
     nonbasic_vars = len(xvars) - len(gx)
     opt_sols = []
 
@@ -35,13 +35,13 @@ def GeneralizedReducedGradient():
 
         delta_f = np.array([df.subs(zip(xvars, x_curr_val)) for df in dfx])
         delta_g = np.array([[i.subs(zip(xvars, x_curr_val)) for i in dg] for dg in dgx])		# Value of h'_i(x_curr_val) for all i
-        J = np.array([dg[nonbasic_vars:] for dg in delta_g])									# Computation of J and C matrices
-        C = np.array([dg[:nonbasic_vars] for dg in delta_g])
+        matr1 = np.array([dg[nonbasic_vars:] for dg in delta_g])								# Computation of matrices 1 and 2
+        matr2 = np.array([dg[:nonbasic_vars] for dg in delta_g])
         delta_f_bar = delta_f[nonbasic_vars:]
         delta_f_cap = delta_f[:nonbasic_vars]
 
-        J_inverse = np.linalg.inv(np.array(J, dtype=float))
-        delta_f_tilde = delta_f_cap - delta_f_bar.dot(J_inverse.dot(C))
+        matr1_inverse = np.linalg.inv(np.array(matr1, dtype=float))                             # Inverse of matrix 1
+        delta_f_tilde = delta_f_cap - delta_f_bar.dot(matr1_inverse.dot(matr2))
 
         # Step 2
 
@@ -49,7 +49,7 @@ def GeneralizedReducedGradient():
             break
 
         d_bar = - delta_f_tilde.T 									# Direction of search in current iteration
-        d_cap = - J_inverse.dot(C.dot(d_bar))
+        d_cap = - matr1_inverse.dot(matr2.dot(d_bar))
         d = np.concatenate((d_bar, d_cap)).T
 
         # Step 3
@@ -80,8 +80,8 @@ def GeneralizedReducedGradient():
                 # Step 3(b)
 
                 delta_g_v = np.array([[i.subs(zip(xvars, v)) for i in dg] for dg in dgx])
-                J_inverse_v = np.linalg.inv(np.array([dg[nonbasic_vars:] for dg in delta_g_v], dtype=float))
-                v_next_cap = v_cap - J_inverse_v.dot(h)
+                matr1_inverse_v = np.linalg.inv(np.array([dg[nonbasic_vars:] for dg in delta_g_v], dtype=float))
+                v_next_cap = v_cap - matr1_inverse_v.dot(h)
 
                 # Step 3(c)
 
@@ -113,12 +113,12 @@ def GeneralizedReducedGradient():
     print('\n\nFinal solution obtained is: {0}'.format(x_curr_val))
     print('Value of the function at this point: {0}\n'.format(fx.subs(zip(xvars, x_curr_val))))
 
-    plt.plot(opt_sols, 'ro')								# Plot the solutions obtained after every iteration
+    plt.plot(opt_sols, 'b-')								# Plot the solutions obtained after every iteration
     plt.show()
 
 if __name__ == '__main__':
     GeneralizedReducedGradient()
-# print(timeit.timeit(setup = GeneralizedReducedGradient, number = 1000))
+print(timeit.timeit(setup = GeneralizedReducedGradient, number = 1000))
 
 
 """
@@ -138,7 +138,7 @@ interpretting it correctly. So I will take it as a win and claim everything went
 #
 #     fx = 4 * x1 - x2 ** 2 + x3 ** 2 - 12				# Function to be minimized
 #     hxs = [20 - x1 ** 2 - x2 ** 2, x1 + x3 - 7]			# Constraints to be obeyed
-    # alpha_0 = 1											# Parameter initializations
+#     alpha_0 = 1											# Parameter initializations
 #     gamma = 0.4
 #     max_iter = 100
 #     max_outer_iter = 50
@@ -240,9 +240,9 @@ interpretting it correctly. So I will take it as a win and claim everything went
 #     print('\n\nFinal solution obtained is: {0}'.format(xcurr))
 #     print('Value of the function at this point: {0}\n'.format(fx.subs(zip(xvars, xcurr))))
 #
-#     plt.plot(opt_sols, 'ro')								# Plot the solutions obtained after every iteration
+#     plt.plot(opt_sols, 'b-')								# Plot the solutions obtained after every iteration
 #     plt.show()
 #
 # if __name__ == '__main__':
 #     generalized_reduced_gradient()
-#print(timeit.timeit(setup = generalized_reduced_gradient, number = 1000))
+# print(timeit.timeit(setup = generalized_reduced_gradient, number = 1000))
